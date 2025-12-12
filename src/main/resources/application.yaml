@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: securepay
+  datasource:
+    url: jdbc:mysql://localhost:3306/securepay?createDatabaseIfNotExist=true
+    username: root
+    password: MyPassword!1234
+
