@@ -1,0 +1,57 @@
+CREATE TABLE users
+(
+    id         BIGINT PRIMARY KEY AUTO_INCREMENT,
+    first_name VARCHAR(50)  NOT NULL,
+    last_name  VARCHAR(50)  NOT NULL,
+    password   VARCHAR(255) NOT NULL,
+    phone      VARCHAR(20)  NOT NULL UNIQUE,
+    email      VARCHAR(100) NOT NULL UNIQUE,
+    pin        VARCHAR(255) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE wallets
+(
+    id      INT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT UNIQUE NOT NULL,
+    balance DECIMAL(10, 2) DEFAULT 0.00,
+    CONSTRAINT fk_wallet_user
+        FOREIGN KEY (user_id)
+            REFERENCES users (id) ON DELETE CASCADE
+);
+
+CREATE TABLE payment_providers
+(
+    id        INT PRIMARY KEY AUTO_INCREMENT,
+    name      ENUM ('PAYPAL', 'STRIPE', 'TELEBIRR') DEFAULT 'STRIPE',
+    is_active  BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE transactions
+(
+    id          BIGINT PRIMARY KEY AUTO_INCREMENT,
+    transaction_code CHAR(26) NOT NULL UNIQUE,
+    sender_id   BIGINT         NOT NULL,
+    receiver_id BIGINT         NOT NULL,
+    provider_id INT NOT NULL,
+    amount      DECIMAL(10, 2) NOT NULL,
+    type        ENUM ('TRANSFER', 'DEPOSIT') DEFAULT 'TRANSFER',
+    status      ENUM ('PENDING', 'COMPLETED', 'FAILED') DEFAULT 'PENDING',
+    description VARCHAR(255),
+    created_at  TIMESTAMP  DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_transaction_sender
+        FOREIGN KEY (sender_id) REFERENCES users (id),
+
+    CONSTRAINT fk_transaction_receiver
+        FOREIGN KEY (receiver_id) REFERENCES users (id),
+
+    CONSTRAINT fk_transaction_provider
+        FOREIGN KEY (provider_id) REFERENCES payment_providers(id),
+
+    INDEX idx_sender (sender_id),
+    INDEX idx_receiver (receiver_id),
+    INDEX idx_provider (provider_id)
+);
+
