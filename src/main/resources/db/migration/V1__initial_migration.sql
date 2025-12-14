@@ -39,7 +39,6 @@ CREATE TABLE transactions
     type        ENUM ('TRANSFER', 'DEPOSIT') DEFAULT 'TRANSFER',
     status      ENUM ('PENDING', 'COMPLETED', 'FAILED') DEFAULT 'PENDING',
     description VARCHAR(255),
-    created_at  TIMESTAMP  DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_transaction_sender
         FOREIGN KEY (sender_id) REFERENCES users (id),

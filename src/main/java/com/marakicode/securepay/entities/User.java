@@ -48,9 +48,6 @@ public class User {
     @Column(name = "pin")
     private String pin;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
-    private LocalDateTime createdAt;
-
     @OneToMany(mappedBy = "sender")
     private Set<Transaction> transactions = new HashSet<>();
 
