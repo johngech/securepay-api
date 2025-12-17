@@ -3,16 +3,24 @@ package com.marakicode.securepay.controllers;
 import com.marakicode.securepay.dtos.ChangePasswordRequest;
 import com.marakicode.securepay.dtos.ChangePinRequest;
 import com.marakicode.securepay.dtos.ErrorDto;
+import com.marakicode.securepay.dtos.SendMoneyRequest;
+import com.marakicode.securepay.dtos.TransactionDto;
 import com.marakicode.securepay.dtos.UserDto;
 import com.marakicode.securepay.dtos.UserRegisterRequest;
 import com.marakicode.securepay.dtos.UserUpdateRequest;
+import com.marakicode.securepay.dtos.UserWalletDto;
 import com.marakicode.securepay.exceptions.EmailAlreadyExistException;
+import com.marakicode.securepay.exceptions.EmptyTransactionsException;
+import com.marakicode.securepay.exceptions.InsufficientBalanceException;
+import com.marakicode.securepay.exceptions.InvalidPinException;
 import com.marakicode.securepay.exceptions.PasswordMisMatchException;
 import com.marakicode.securepay.exceptions.PhoneNumberAlreadyExistException;
 import com.marakicode.securepay.exceptions.PinMisMatchException;
+import com.marakicode.securepay.exceptions.SameAccountSendException;
+import com.marakicode.securepay.exceptions.TransactionNotFoundException;
 import com.marakicode.securepay.exceptions.UserNotFoundException;
-import com.marakicode.securepay.mappers.UserMapper;
-import com.marakicode.securepay.repositories.UserRepository;
+import com.marakicode.securepay.exceptions.WalletNotFoundException;
+import com.marakicode.securepay.services.TransactionService;
 import com.marakicode.securepay.services.UserService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -36,9 +44,8 @@ import java.util.List;
 @RequestMapping("/users")
 public class UserController {
 
-    private final UserRepository userRepository;
-    private final UserMapper userMapper;
     private final UserService userService;
+    private final TransactionService transactionService;
 
     @GetMapping
     public List<UserDto> getAllUsers() {
@@ -94,6 +101,47 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/{userId}/wallet")
+    public ResponseEntity<UserWalletDto> wallet(@PathVariable Long userId) {
+        var userWallet = userService.wallet(userId);
+        return ResponseEntity.ok(userWallet);
+    }
+
+    @PostMapping("/{senderId}/transactions")
+    public ResponseEntity<TransactionDto> sendMoney(
+            @PathVariable Long senderId, @Valid @RequestBody SendMoneyRequest request) {
+        var transactionDto = transactionService.sendMoney(senderId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(transactionDto);
+    }
+
+    @GetMapping("/{userId}/transactions")
+    public List<TransactionDto> getAllTransactions(@PathVariable Long userId) {
+        return transactionService.getAllTransactionsByUserId(userId);
+    }
+
+    @GetMapping("/{userId}/transactions/{transactionCode}")
+    public TransactionDto getTransactionsByCode(
+            @PathVariable Long userId, @PathVariable String transactionCode) {
+        return transactionService.getTransactionByUserIdAndTransactionCode(userId, transactionCode);
+    }
+
+    @DeleteMapping("/{userId}/transactions/{transactionCode}")
+    public ResponseEntity<Void> deleteTransaction(
+            @PathVariable Long userId,@PathVariable String transactionCode){
+        transactionService.deleteTransaction(userId,transactionCode);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{userId}/transactions/sent")
+    public List<TransactionDto> sentTransactions(@PathVariable Long userId) {
+        return transactionService.getSentTransactionByUserId(userId);
+    }
+
+    @GetMapping("/{senderId}/transactions/received")
+    public List<TransactionDto> receivedTransaction(@PathVariable Long senderId) {
+        return transactionService.getReceivedTransactionBySenderId(senderId);
+    }
+
     @ExceptionHandler(EmailAlreadyExistException.class)
     public ResponseEntity<ErrorDto> handleEmailAlreadyExist() {
         return ResponseEntity.badRequest()
@@ -123,4 +171,37 @@ public class UserController {
                 .body(new ErrorDto("Invalid Pin"));
     }
 
+    @ExceptionHandler(WalletNotFoundException.class)
+    public ResponseEntity<ErrorDto> handleUserWalletNotFound() {
+        return ResponseEntity.badRequest().body(new ErrorDto("Wallet not found"));
+    }
+
+    @ExceptionHandler(EmptyTransactionsException.class)
+    public ResponseEntity<ErrorDto> handleEmptyTransaction() {
+        return ResponseEntity.badRequest().body(new ErrorDto("Transaction not found"));
+    }
+
+    @ExceptionHandler(SameAccountSendException.class)
+    public ResponseEntity<ErrorDto> handleSame() {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorDto("Cannot send to the same account"));
+    }
+
+    @ExceptionHandler(InsufficientBalanceException.class)
+    public ResponseEntity<ErrorDto> handleInsufficientBalance() {
+        return ResponseEntity.badRequest()
+                .body(new ErrorDto("Insufficient balance."));
+    }
+
+    @ExceptionHandler(InvalidPinException.class)
+    public ResponseEntity<ErrorDto> handleInvalidPin() {
+        return ResponseEntity.badRequest()
+                .body(new ErrorDto("Invalid pin."));
+    }
+
+    @ExceptionHandler(TransactionNotFoundException.class)
+    public ResponseEntity<ErrorDto> handleTransactionNotFound(Exception ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorDto("Transaction not found"));
+    }
 }

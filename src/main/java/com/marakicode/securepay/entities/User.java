@@ -7,16 +7,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -49,9 +47,29 @@ public class User {
     private String pin;
 
     @OneToMany(mappedBy = "sender")
-    private Set<Transaction> transactions = new HashSet<>();
+    private List<TransactionParticipant> senderParticipants = new ArrayList<>();
 
-    @OneToOne(mappedBy = "user")
-    private Wallet wallet;
+    public void addSenderParticipant(TransactionParticipant participant) {
+        senderParticipants.add(participant);
+        participant.setSender(this);
+    }
+
+    public void removeSenderParticipant(TransactionParticipant participant) {
+        senderParticipants.remove(participant);
+        participant.setSender(null);
+    }
+
+    @OneToMany(mappedBy = "receiver")
+    private List<TransactionParticipant> receiverParticipants = new ArrayList<>();
+
+    public void addReceiverParticipant(TransactionParticipant participant) {
+        receiverParticipants.add(participant);
+        participant.setReceiver(this);
+    }
+
+    public void removeReceiverParticipant(TransactionParticipant participant) {
+        receiverParticipants.remove(participant);
+        participant.setReceiver(null);
+    }
 
 }
