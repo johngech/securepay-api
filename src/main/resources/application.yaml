@@ -9,3 +9,8 @@ spring:
   jpa:
     show-sql: true
 
+  jwt:
+    secreteKey: opensslE1De/s8IVe0DSwgYcJduqn1pCuDVXehGUkTQGUhvqCkdgYiF4tsXH9PQk4ihmJV+yKSfJirfF/00SsAXkuYqEg==
+    accessTokenExpiration: 900 # 15 minutes
+    refreshTokenExpiration: 604800 # 7 days
+

@@ -14,7 +14,7 @@ public record UserRegisterRequest(
         String lastName,
 
         @NotNull(message = "phone is required")
-        @Size(min = 6, max = 10, message = "lastName must be between 10 to 20 characters long.")
+        @Size(min = 10, max = 15, message = "lastName must be between {min} to {max} characters long.")
         String phone,
 
         @NotNull(message = "email is required") @Email(message = "email must be valid")

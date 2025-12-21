@@ -2,25 +2,14 @@ package com.marakicode.securepay.services;
 
 import com.marakicode.securepay.dtos.SendMoneyRequest;
 import com.marakicode.securepay.dtos.TransactionDto;
-import com.marakicode.securepay.entities.PaymentProvider;
-import com.marakicode.securepay.entities.PaymentProviders;
 import com.marakicode.securepay.entities.Transaction;
 import com.marakicode.securepay.entities.TransactionParticipant;
 import com.marakicode.securepay.entities.TransactionStatus;
 import com.marakicode.securepay.entities.TransactionType;
 import com.marakicode.securepay.entities.User;
-import com.marakicode.securepay.entities.Wallet;
-import com.marakicode.securepay.exceptions.InsufficientBalanceException;
-import com.marakicode.securepay.exceptions.InvalidPinException;
-import com.marakicode.securepay.exceptions.SameAccountSendException;
 import com.marakicode.securepay.exceptions.TransactionNotFoundException;
-import com.marakicode.securepay.exceptions.UserNotFoundException;
-import com.marakicode.securepay.exceptions.WalletNotFoundException;
 import com.marakicode.securepay.mappers.TransactionMapper;
-import com.marakicode.securepay.repositories.PaymentProviderRepository;
 import com.marakicode.securepay.repositories.TransactionRepository;
-import com.marakicode.securepay.repositories.UserRepository;
-import com.marakicode.securepay.repositories.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,9 +24,9 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
-    private final UserRepository userRepository;
-    private final PaymentProviderRepository paymentProviderRepository;
-    private final WalletRepository walletRepository;
+    private final PaymentProviderService paymentProviderService;
+    private final WalletService walletService;
+    private final UserService userService;
 
     public List<TransactionDto> getAllTransactions() {
         var transactions = transactionRepository.findAll();
@@ -59,8 +48,10 @@ public class TransactionService {
         return transactionMapper.toDtoList(transactions);
     }
 
-    public TransactionDto getTransactionByUserIdAndTransactionCode(Long userId, String transactionCode) {
-        var transaction = transactionRepository.getTransactionByUserIdAndTransactionCode(userId, transactionCode)
+    public TransactionDto getTransactionByUserIdAndTransactionCode(
+            Long userId, String transactionCode) {
+        var transaction = transactionRepository
+                .getTransactionByUserIdAndTransactionCode(userId, transactionCode)
                 .orElseThrow(TransactionNotFoundException::new);
         return transactionMapper.toDto(transaction);
     }
@@ -79,30 +70,21 @@ public class TransactionService {
         transactionRepository.delete(transaction);
     }
 
-    private PaymentProvider getPaymentProvider() {
-        return paymentProviderRepository.findByName(PaymentProviders.STRIPE)
-                .orElseGet(() -> {
-                    var newProvider = new PaymentProvider();
-                    newProvider.setName(PaymentProviders.STRIPE);
-                    return paymentProviderRepository.save(newProvider);
-                });
-    }
-
     @Transactional
     public TransactionDto sendMoney(Long senderId, SendMoneyRequest request) {
         // validate data
-        var sender = validateUserExists(senderId);
-        var receiver = validateUserExists(request.getReceiverId());
+        var sender = userService.validateUserExists(senderId);
+        var receiver = userService.validateUserExists(request.getReceiverId());
 
-        validateNotSameUsers(sender, receiver);
-        validatePin(sender, request.getPin());
+        userService.validateNotSameUsers(sender, receiver);
+        userService.validatePin(sender, request.getPin());
 
-        var senderWallet = getWallet(senderId);
-        var receiverWallet = getWallet(receiver.getId());
-        validateSufficientBalance(senderWallet, request.getAmount());
+        var senderWallet = walletService.getWallet(senderId);
+        var receiverWallet = walletService.getWallet(receiver.getId());
+        walletService.validateSufficientBalance(senderWallet, request.getAmount());
 
         // transfer funds
-        transferFunds(senderWallet, receiverWallet, request.getAmount());
+        walletService.manageTransfer(senderWallet, receiverWallet, request.getAmount());
 
         // record transactions
         var transaction = recordTransfer(sender, receiver, request.getAmount(), request.getDescription());
@@ -111,8 +93,9 @@ public class TransactionService {
     }
 
     private Transaction recordTransfer(User sender, User receiver, BigDecimal amount, String description) {
+        var provider = paymentProviderService.getPaymentProvider();
         var transaction = Transaction.builder()
-                .provider(getPaymentProvider())
+                .provider(provider)
                 .type(TransactionType.TRANSFER)
                 .status(TransactionStatus.PENDING)
                 .amount(amount)
@@ -127,39 +110,6 @@ public class TransactionService {
         transaction.addParticipant(participant);
 
         return transactionRepository.save(transaction);
-    }
-
-    private void transferFunds(Wallet senderWallet, Wallet receiverWallet, BigDecimal amount) {
-        senderWallet.setBalance(senderWallet.getBalance().subtract(amount));
-        receiverWallet.setBalance(receiverWallet.getBalance().add(amount));
-        walletRepository.saveAll(List.of(senderWallet, receiverWallet));
-    }
-
-    private void validateSufficientBalance(Wallet senderWallet, BigDecimal amount) {
-        if (senderWallet.getBalance().compareTo(amount) < 0) {
-            throw new InsufficientBalanceException();
-        }
-    }
-
-    private Wallet getWallet(Long userId) {
-        return walletRepository.getWalletByUser(userId)
-                .orElseThrow(WalletNotFoundException::new);
-    }
-
-    private void validatePin(User sender, String pin) {
-        if (!sender.getPin().equals(pin))
-            throw new InvalidPinException();
-    }
-
-    private void validateNotSameUsers(User sender, User receiver) {
-        if (sender.getId().equals(receiver.getId())) {
-            throw new SameAccountSendException();
-        }
-    }
-
-    private User validateUserExists(Long senderId) {
-        return userRepository.findById(senderId)
-                .orElseThrow(UserNotFoundException::new);
     }
 
     private String generateTransactionCode() {
