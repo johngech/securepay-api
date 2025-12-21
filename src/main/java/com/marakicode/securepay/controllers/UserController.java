@@ -16,7 +16,7 @@ import com.marakicode.securepay.exceptions.InvalidPinException;
 import com.marakicode.securepay.exceptions.PasswordMisMatchException;
 import com.marakicode.securepay.exceptions.PhoneNumberAlreadyExistException;
 import com.marakicode.securepay.exceptions.PinMisMatchException;
-import com.marakicode.securepay.exceptions.SameAccountSendException;
+import com.marakicode.securepay.exceptions.CannotSendToSameUserException;
 import com.marakicode.securepay.exceptions.TransactionNotFoundException;
 import com.marakicode.securepay.exceptions.UserNotFoundException;
 import com.marakicode.securepay.exceptions.WalletNotFoundException;
@@ -103,7 +103,7 @@ public class UserController {
 
     @GetMapping("/{userId}/wallet")
     public ResponseEntity<UserWalletDto> wallet(@PathVariable Long userId) {
-        var userWallet = userService.wallet(userId);
+        var userWallet = userService.getUserWallet(userId);
         return ResponseEntity.ok(userWallet);
     }
 
@@ -181,7 +181,7 @@ public class UserController {
         return ResponseEntity.badRequest().body(new ErrorDto("Transaction not found"));
     }
 
-    @ExceptionHandler(SameAccountSendException.class)
+    @ExceptionHandler(CannotSendToSameUserException.class)
     public ResponseEntity<ErrorDto> handleSame() {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ErrorDto("Cannot send to the same account"));

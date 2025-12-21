@@ -4,9 +4,9 @@ import com.marakicode.securepay.dtos.SendMoneyRequest;
 import com.marakicode.securepay.dtos.TransactionDto;
 import com.marakicode.securepay.entities.Transaction;
 import com.marakicode.securepay.entities.TransactionParticipant;
-import com.marakicode.securepay.entities.TransactionStatus;
 import com.marakicode.securepay.entities.TransactionType;
 import com.marakicode.securepay.entities.User;
+import com.marakicode.securepay.exceptions.CannotSendToSameUserException;
 import com.marakicode.securepay.exceptions.TransactionNotFoundException;
 import com.marakicode.securepay.mappers.TransactionMapper;
 import com.marakicode.securepay.repositories.TransactionRepository;
@@ -72,21 +72,19 @@ public class TransactionService {
 
     @Transactional
     public TransactionDto sendMoney(Long senderId, SendMoneyRequest request) {
-        // validate data
-        var sender = userService.validateUserExists(senderId);
-        var receiver = userService.validateUserExists(request.getReceiverId());
 
-        userService.validateNotSameUsers(sender, receiver);
-        userService.validatePin(sender, request.getPin());
+        var sender = userService.getUserEntity(senderId);
+        var receiver = userService.getUserEntity(request.getReceiverId());
 
-        var senderWallet = walletService.getWallet(senderId);
-        var receiverWallet = walletService.getWallet(receiver.getId());
+        validateDifferentUsers(sender, receiver);
+        walletService.validatePin(sender, request.getPin());
+
+        var senderWallet = walletService.getWalletByUserId(senderId);
+        var receiverWallet = walletService.getWalletByUserId(receiver.getId());
         walletService.validateSufficientBalance(senderWallet, request.getAmount());
 
-        // transfer funds
-        walletService.manageTransfer(senderWallet, receiverWallet, request.getAmount());
+        walletService.transfer(senderWallet, receiverWallet, request.getAmount());
 
-        // record transactions
         var transaction = recordTransfer(sender, receiver, request.getAmount(), request.getDescription());
 
         return transactionMapper.toDto(transaction);
@@ -97,7 +95,6 @@ public class TransactionService {
         var transaction = Transaction.builder()
                 .provider(provider)
                 .type(TransactionType.TRANSFER)
-                .status(TransactionStatus.PENDING)
                 .amount(amount)
                 .description(description)
                 .transactionCode(generateTransactionCode())
@@ -110,6 +107,12 @@ public class TransactionService {
         transaction.addParticipant(participant);
 
         return transactionRepository.save(transaction);
+    }
+
+    public void validateDifferentUsers(User sender, User receiver) {
+        if (sender.getId().equals(receiver.getId())) {
+            throw new CannotSendToSameUserException();
+        }
     }
 
     private String generateTransactionCode() {

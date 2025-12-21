@@ -75,4 +75,8 @@ public class Transaction {
         participants.remove(participant);
         participant.setTransaction(null);
     }
+
+    public void markAsCompleted() {
+        this.status = TransactionStatus.COMPLETED;
+    }
 }
