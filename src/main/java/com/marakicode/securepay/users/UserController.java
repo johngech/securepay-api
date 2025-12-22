@@ -1,16 +1,7 @@
 package com.marakicode.securepay.users;
 
 import com.marakicode.securepay.common.ErrorDto;
-import com.marakicode.securepay.transactions.SendMoneyRequest;
-import com.marakicode.securepay.transactions.TransactionDto;
 import com.marakicode.securepay.wallets.UserWalletDto;
-import com.marakicode.securepay.transactions.EmptyTransactionsException;
-import com.marakicode.securepay.wallets.InsufficientBalanceException;
-import com.marakicode.securepay.wallets.InvalidPinException;
-import com.marakicode.securepay.transactions.CannotSendToSameUserException;
-import com.marakicode.securepay.transactions.TransactionNotFoundException;
-import com.marakicode.securepay.wallets.WalletNotFoundException;
-import com.marakicode.securepay.transactions.TransactionService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -34,7 +25,6 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
-    private final TransactionService transactionService;
 
     @GetMapping
     public List<UserDto> getAllUsers() {
@@ -96,41 +86,6 @@ public class UserController {
         return ResponseEntity.ok(userWallet);
     }
 
-    @PostMapping("/{senderId}/transactions")
-    public ResponseEntity<TransactionDto> sendMoney(
-            @PathVariable Long senderId, @Valid @RequestBody SendMoneyRequest request) {
-        var transactionDto = transactionService.sendMoney(senderId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(transactionDto);
-    }
-
-    @GetMapping("/{userId}/transactions")
-    public List<TransactionDto> getAllTransactions(@PathVariable Long userId) {
-        return transactionService.getAllTransactionsByUserId(userId);
-    }
-
-    @GetMapping("/{userId}/transactions/{transactionCode}")
-    public TransactionDto getTransactionsByCode(
-            @PathVariable Long userId, @PathVariable String transactionCode) {
-        return transactionService.getTransactionByUserIdAndTransactionCode(userId, transactionCode);
-    }
-
-    @DeleteMapping("/{userId}/transactions/{transactionCode}")
-    public ResponseEntity<Void> deleteTransaction(
-            @PathVariable Long userId,@PathVariable String transactionCode){
-        transactionService.deleteTransaction(userId,transactionCode);
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/{userId}/transactions/sent")
-    public List<TransactionDto> sentTransactions(@PathVariable Long userId) {
-        return transactionService.getSentTransactionByUserId(userId);
-    }
-
-    @GetMapping("/{senderId}/transactions/received")
-    public List<TransactionDto> receivedTransaction(@PathVariable Long senderId) {
-        return transactionService.getReceivedTransactionBySenderId(senderId);
-    }
-
     @ExceptionHandler(EmailAlreadyExistException.class)
     public ResponseEntity<ErrorDto> handleEmailAlreadyExist() {
         return ResponseEntity.badRequest()
@@ -160,37 +115,4 @@ public class UserController {
                 .body(new ErrorDto("Invalid Pin"));
     }
 
-    @ExceptionHandler(WalletNotFoundException.class)
-    public ResponseEntity<ErrorDto> handleUserWalletNotFound() {
-        return ResponseEntity.badRequest().body(new ErrorDto("Wallet not found"));
-    }
-
-    @ExceptionHandler(EmptyTransactionsException.class)
-    public ResponseEntity<ErrorDto> handleEmptyTransaction() {
-        return ResponseEntity.badRequest().body(new ErrorDto("Transaction not found"));
-    }
-
-    @ExceptionHandler(CannotSendToSameUserException.class)
-    public ResponseEntity<ErrorDto> handleSame() {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ErrorDto("Cannot send to the same account"));
-    }
-
-    @ExceptionHandler(InsufficientBalanceException.class)
-    public ResponseEntity<ErrorDto> handleInsufficientBalance() {
-        return ResponseEntity.badRequest()
-                .body(new ErrorDto("Insufficient balance."));
-    }
-
-    @ExceptionHandler(InvalidPinException.class)
-    public ResponseEntity<ErrorDto> handleInvalidPin() {
-        return ResponseEntity.badRequest()
-                .body(new ErrorDto("Invalid pin."));
-    }
-
-    @ExceptionHandler(TransactionNotFoundException.class)
-    public ResponseEntity<ErrorDto> handleTransactionNotFound(Exception ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ErrorDto("Transaction not found"));
-    }
 }
