@@ -2,6 +2,7 @@ package com.marakicode.securepay.users;
 
 import com.marakicode.securepay.wallets.UserWalletDto;
 import com.marakicode.securepay.wallets.Wallet;
+import com.marakicode.securepay.wallets.WalletRepository;
 import com.marakicode.securepay.wallets.WalletService;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +19,7 @@ public class UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder encoder;
     private final WalletService walletService;
+    private final WalletRepository walletRepository;
 
     public List<UserDto> getAllUsers() {
         return userRepository.findAll()
@@ -45,12 +47,14 @@ public class UserService {
         var user = userMapper.toEntity(request);
         user.setPassword(encoder.encode(request.password()));
 
+        userRepository.save(user);
+
         // Create a wallet for user
         var wallet = new Wallet();
         wallet.setBalance(BigDecimal.ZERO);
         wallet.setUser(user);
+        walletRepository.save(wallet);
 
-        userRepository.save(user);
         return userMapper.toDto(user);
     }
 
@@ -70,7 +74,7 @@ public class UserService {
     public void changePin(Long userId, ChangePinRequest request) {
         var user = getUserEntity(userId);
 
-        if (!encoder.matches(request.oldPin(), user.getPin())) {
+        if (user.getPin() != null && !encoder.matches(request.oldPin(), user.getPin())) {
             throw new PinMisMatchException();
         }
 

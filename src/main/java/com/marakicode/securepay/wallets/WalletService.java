@@ -42,4 +42,10 @@ public class WalletService {
         receiverWallet.setBalance(receiverWallet.getBalance().add(amount));
         walletRepository.saveAll(List.of(senderWallet, receiverWallet));
     }
+
+    public void credit(Long userId, BigDecimal amount) {
+        var wallet = getWalletByUserId(userId);
+        wallet.setBalance(wallet.getBalance().add(amount));
+        walletRepository.save(wallet);
+    }
 }

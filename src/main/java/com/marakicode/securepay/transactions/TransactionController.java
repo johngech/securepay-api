@@ -38,13 +38,6 @@ public class TransactionController {
         return ResponseEntity.ok(transactionDto);
     }
 
-    // must be refactored (senderId must be found from currently authenticated user)
-    @PostMapping("/user/{senderId}/send")
-    public ResponseEntity<TransactionDto> sendMoney(
-            @PathVariable Long senderId, @Valid @RequestBody SendMoneyRequest request) {
-        var transactionDto = transactionService.sendMoney(senderId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(transactionDto);
-    }
 
     @GetMapping("/user/{userId}")
     public List<TransactionDto> getAllTransactionsByUser(@PathVariable Long userId) {

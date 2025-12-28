@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -32,17 +33,22 @@ public class PaymentProvider {
     @Column(name = "id")
     private Integer id;
 
-    @Column(name = "name")
+    @Column(name = "provider_type")
     @Enumerated(EnumType.STRING)
-    private PaymentProviders name;
+    private PaymentProviderType providerType;
 
     @Column(name = "is_active")
-    private boolean isActive;
+    private boolean active;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "provider")
     private Set<Transaction> transactions = new HashSet<>();
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 
 }

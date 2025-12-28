@@ -1,6 +1,6 @@
 package com.marakicode.securepay.payments;
 
-public enum PaymentProviders {
+public enum PaymentProviderType {
     STRIPE,
     PAYPAL,
     FENANPAY

@@ -72,7 +72,7 @@ public class AuthService {
     public User getCurrentUser() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         assert auth != null;
-        var userId = (Long) auth.getPrincipal();
+        var userId = ((AuthUser) auth.getPrincipal()).id();
         assert userId != null;
         return userRepository.findById(userId).orElse(null);
     }

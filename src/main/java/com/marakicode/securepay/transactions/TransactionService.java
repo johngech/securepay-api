@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -90,6 +92,7 @@ public class TransactionService {
                 .provider(provider)
                 .type(TransactionType.TRANSFER)
                 .amount(amount)
+                .externalTransactionId(null)
                 .description(description)
                 .transactionCode(generateTransactionCode())
                 .build();
@@ -99,8 +102,28 @@ public class TransactionService {
                 .receiver(receiver)
                 .build();
         transaction.addParticipant(participant);
-
+        transaction.markAsCompleted();
         return transactionRepository.save(transaction);
+    }
+
+    public Transaction createPendingDeposit(Long userId, BigDecimal amount) {
+        var user = userService.getUserEntity(userId);
+        var transaction = Transaction.builder()
+                .provider(paymentProviderService.getPaymentProvider())
+                .type(TransactionType.DEPOSIT)
+                .status(TransactionStatus.PENDING) // Wallet update comes from webhook
+                .amount(amount)
+                .description("Wallet deposit via stripe")
+                .externalTransactionId(generateExternalRef())
+                .transactionCode(generateTransactionCode())
+                .build();
+        transaction.addParticipant(
+                TransactionParticipant.builder()
+                        .receiver(user)
+                        .build()
+        );
+        transactionRepository.save(transaction);
+        return transaction;
     }
 
     public void validateDifferentUsers(User sender, User receiver) {
@@ -110,11 +133,12 @@ public class TransactionService {
     }
 
     private String generateTransactionCode() {
-        var builder = new StringBuilder();
-        return builder.append("TNX-")
-                .append(UUID.randomUUID().toString(), 0, 8)
-                .append("-")
-                .append(System.currentTimeMillis() % 10000)
-                .toString();
+        return "TNX-" + UUID.randomUUID().toString().substring(0, 8) +
+                "-" + (System.currentTimeMillis() % 10000);
+    }
+
+    private String generateExternalRef() {
+        return "exr_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
+                + "_" + UUID.randomUUID().toString().substring(0, 8);
     }
 }

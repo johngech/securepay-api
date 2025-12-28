@@ -15,7 +15,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @EntityGraph(attributePaths = {"wallet"})
     @Query("select w from Wallet w where w.user.id = :userId")
-    Optional<Wallet> getWalletByUserId(@Param("userId") Long userId);
+    Optional<Wallet> getWalletByUserId(@Param("id") Long userId);
 
     Optional<User> findByEmail(String email);
 }

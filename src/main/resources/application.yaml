@@ -9,8 +9,16 @@ spring:
   jpa:
     show-sql: true
 
+  config:
+    import: optional:file:.env[.properties]
+
   jwt:
-    secreteKey: opensslE1De/s8IVe0DSwgYcJduqn1pCuDVXehGUkTQGUhvqCkdgYiF4tsXH9PQk4ihmJV+yKSfJirfF/00SsAXkuYqEg==
-    accessTokenExpiration: 900 # 15 minutes
-    refreshTokenExpiration: 604800 # 7 days
+    secretKey: ${JWT_SECRET}
+    accessTokenExpiration: ${ACCESS_TOKEN_EXPIRATION} # 900 15 minutes
+    refreshTokenExpiration: ${REFRESH_TOKEN_EXPIRATION} # 604800 7 days
+
+stripe:
+  secretKey: ${STRIPE_SECRET_KEY}
+  webhookSecretKey: ${STRIPE_WEBHOOK_SECRET_KEY}
+
 

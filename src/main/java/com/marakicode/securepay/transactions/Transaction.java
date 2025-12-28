@@ -14,6 +14,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -32,7 +33,14 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table(name = "transactions", schema = "securepay")
+@Table(
+        name = "transactions",
+        schema = "securepay",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uq_transactions_external_ref",
+                columnNames = {"external_transaction_id", "provider_id"}
+        )
+)
 public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,6 +49,9 @@ public class Transaction {
 
     @Column(name = "transaction_code")
     private String transactionCode;
+
+    @Column(name = "external_transaction_id")
+    private String externalTransactionId;
 
     @ManyToOne
     @JoinColumn(name = "provider_id")
@@ -79,5 +90,9 @@ public class Transaction {
 
     public void markAsCompleted() {
         this.status = TransactionStatus.COMPLETED;
+    }
+
+    public void markAsFailed() {
+        this.status = TransactionStatus.FAILED;
     }
 }

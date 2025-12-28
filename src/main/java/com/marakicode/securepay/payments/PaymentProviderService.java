@@ -9,10 +9,10 @@ public class PaymentProviderService {
     private final PaymentProviderRepository providerRepository;
 
     public PaymentProvider getPaymentProvider() {
-        return providerRepository.findByName(PaymentProviders.STRIPE)
+        return providerRepository.findByProviderType(PaymentProviderType.STRIPE)
                 .orElseGet(() -> {
                     var newProvider = new PaymentProvider();
-                    newProvider.setName(PaymentProviders.STRIPE);
+                    newProvider.setProviderType(PaymentProviderType.STRIPE);
                     return providerRepository.save(newProvider);
                 });
     }
