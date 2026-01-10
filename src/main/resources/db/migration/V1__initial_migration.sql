@@ -22,7 +22,7 @@ CREATE TABLE wallets
 CREATE TABLE payment_providers
 (
     id         INT PRIMARY KEY AUTO_INCREMENT,
-    name       ENUM ('PAYPAL', 'STRIPE', 'TELEBIRR') DEFAULT 'STRIPE',
+    provider_type       ENUM ('PAYPAL', 'STRIPE', 'TELEBIRR') DEFAULT 'STRIPE',
     is_active  BOOLEAN   NOT NULL                    DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL                    DEFAULT CURRENT_TIMESTAMP
 );
