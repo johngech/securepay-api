@@ -21,9 +21,6 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "wallets", schema = "securepay")
 public class Wallet {
-    // For race condition
-    @Version
-    private Long version;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

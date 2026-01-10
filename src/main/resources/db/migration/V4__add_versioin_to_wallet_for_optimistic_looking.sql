@@ -1,1 +1,0 @@
-ALTER TABLE securepay.wallets ADD COLUMN version BIGINT NOT NULL DEFAULT 0;
