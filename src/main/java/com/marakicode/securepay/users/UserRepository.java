@@ -18,4 +18,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<Wallet> getWalletByUserId(@Param("id") Long userId);
 
     Optional<User> findByEmail(String email);
+
+    Optional<User> findByPhone(String phone);
 }

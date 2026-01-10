@@ -33,8 +33,29 @@ public class UserService {
                 .orElseThrow(UserNotFoundException::new);
     }
 
+    public User getUserEntity(String phone) {
+        return userRepository.findByPhone(phone)
+                .orElseThrow(UserNotFoundException::new);
+    }
+
     public UserDto getUserById(Long userId) {
         return userMapper.toDto(getUserEntity(userId));
+    }
+
+    public User resolveReceiver(ReceiverIdentifier identifier) {
+        if (identifier.phone() != null) {
+            return userRepository.findByPhone(identifier.phone())
+                    .orElseThrow(UserNotFoundException::new);
+        }
+        if (identifier.email() != null) {
+            return userRepository.findByEmail(identifier.email())
+                    .orElseThrow(UserNotFoundException::new);
+        }
+        throw new IllegalArgumentException("Receiver Identifier required.");
+    }
+
+    public UserDto getUserByPhone(String phone) {
+        return userMapper.toDto(getUserEntity(phone));
     }
 
     public UserWalletDto getUserWallet(Long userId) {

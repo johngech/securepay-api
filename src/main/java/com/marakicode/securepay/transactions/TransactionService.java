@@ -70,7 +70,9 @@ public class TransactionService {
     public TransactionDto sendMoney(Long senderId, SendMoneyRequest request) {
 
         var sender = userService.getUserEntity(senderId);
-        var receiver = userService.getUserEntity(request.getReceiverId());
+//        var receiver = userService.getUserEntity(request.getReceiverId());
+
+        var receiver = userService.resolveReceiver(request.receiver);
 
         validateDifferentUsers(sender, receiver);
         walletService.validatePin(sender, request.getPin());

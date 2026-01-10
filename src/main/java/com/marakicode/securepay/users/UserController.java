@@ -86,6 +86,22 @@ public class UserController {
         return ResponseEntity.ok(userWallet);
     }
 
+    @PostMapping("/resolve")
+    public ResponseEntity<UserPreviewResponse> resolve(
+            @RequestBody @Valid ReceiverIdentifier request) {
+        var user = userService.resolveReceiver(request);
+
+        var contact = user.getPhone() != null ? user.getPhone() : user.getEmail();
+
+        return ResponseEntity.ok(
+                new UserPreviewResponse(
+                        user.getId(),
+                        user.getFirstName() + " " + user.getLastName(),
+                        contact
+                )
+        );
+    }
+
     @ExceptionHandler(EmailAlreadyExistException.class)
     public ResponseEntity<ErrorDto> handleEmailAlreadyExist() {
         return ResponseEntity.badRequest()
@@ -100,7 +116,8 @@ public class UserController {
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorDto> handleUserNotFound() {
-        return ResponseEntity.badRequest().body(new ErrorDto("User not found"));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorDto("User not found"));
     }
 
     @ExceptionHandler(PasswordMisMatchException.class)
