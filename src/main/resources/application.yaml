@@ -1,13 +1,6 @@
 spring:
   application:
     name: securepay
-  datasource:
-    url: jdbc:mysql://localhost:3306/securepay?createDatabaseIfNotExist=true
-    username: root
-    password: MyPassword!1234
-
-  jpa:
-    show-sql: true
 
   config:
     import: optional:file:.env[.properties]
@@ -17,8 +10,19 @@ spring:
     accessTokenExpiration: ${ACCESS_TOKEN_EXPIRATION} # 900 15 minutes
     refreshTokenExpiration: ${REFRESH_TOKEN_EXPIRATION} # 604800 7 days
 
+  profiles:
+    active: dev
+
 stripe:
   secretKey: ${STRIPE_SECRET_KEY}
   webhookSecretKey: ${STRIPE_WEBHOOK_SECRET_KEY}
+
+fenanpay:
+  apiBaseUrl: ${FENAN_PAY_API_BASE_URL}
+  apiKey: ${FENAN_PAY_API_KEY}
+
+  secretKey: ${FENAN_PAY_SECRET_KEY}
+  webhookSecretKey: ${FENAN_PAY_WEBHOOK_SECRET_KEY}
+
 
 
