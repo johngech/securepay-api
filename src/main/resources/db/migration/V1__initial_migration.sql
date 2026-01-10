@@ -21,10 +21,10 @@ CREATE TABLE wallets
 
 CREATE TABLE payment_providers
 (
-    id         INT PRIMARY KEY AUTO_INCREMENT,
-    provider_type       ENUM ('PAYPAL', 'STRIPE', 'TELEBIRR') DEFAULT 'STRIPE',
-    is_active  BOOLEAN   NOT NULL                    DEFAULT TRUE,
-    created_at TIMESTAMP NOT NULL                    DEFAULT CURRENT_TIMESTAMP
+    id            INT PRIMARY KEY AUTO_INCREMENT,
+    provider_type ENUM ('PAYPAL', 'STRIPE', 'TELEBIRR') DEFAULT 'STRIPE',
+    is_active     BOOLEAN   NOT NULL                    DEFAULT TRUE,
+    created_at    TIMESTAMP NOT NULL                    DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE transactions
@@ -46,7 +46,7 @@ CREATE TABLE transaction_participants
 (
     id             BIGINT PRIMARY KEY AUTO_INCREMENT,
     transaction_id BIGINT NOT NULL,
-    sender_id      BIGINT NOT NULL,
+    sender_id      BIGINT NULL,
     receiver_id    BIGINT NOT NULL,
     involved_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
 
