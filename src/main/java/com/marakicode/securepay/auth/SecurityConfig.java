@@ -82,11 +82,15 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfiguration() {
         var configuration = new CorsConfiguration();
-        List<String> origins = Arrays.asList(allowedOrigins.split(","));
+        List<String> origins = Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .toList();
+
         configuration.setAllowedOrigins(origins);
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT","PATH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true); // if using cookies/auth headers
+        configuration.setExposedHeaders(List.of("Authorization", "Content-Type")); // optional but safer
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
