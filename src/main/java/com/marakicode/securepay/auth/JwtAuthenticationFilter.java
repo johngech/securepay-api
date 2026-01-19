@@ -19,6 +19,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        // This tells Spring: "If the path is /payments/webhook, don't run this filter."
+        return request.getServletPath().equals("/payments/webhook");
+    }
+
+    @Override
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
